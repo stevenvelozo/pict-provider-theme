@@ -2,6 +2,6 @@
 	"Name": "pict-provider-theme",
 	"Version": "1.0.1",
 	"Description": "Pict provider for runtime theme management — registers theme bundles (token maps + CSS + SVG + image assets), applies them by injecting CSS custom properties into a single <style> element, supports dark/light/system modes via a class on <html>, and exposes jellyfish template tags ({~Theme:~}, {~ThemeVar:~}, {~ThemeAsset:~}, {~ThemeImage:~}) for token resolution in templates. Stateless — host applications own theme persistence.",
-	"GeneratedAt": "2026-05-23T18:28:12.808Z",
-	"GitCommit": "138b63c"
+	"GeneratedAt": "2026-05-26T18:21:41.173Z",
+	"GitCommit": "774bfee"
 }
