@@ -22,7 +22,8 @@
 				"Primary":     { "Light": "#1a1a1a", "Dark": "#ededed" },
 				"Secondary":   { "Light": "#454545", "Dark": "#bdbdbd" },
 				"Muted":       { "Light": "#6b6b6b", "Dark": "#888888" },
-				"Placeholder": { "Light": "#9a9a9a", "Dark": "#6a6a6a" }
+				"Placeholder": { "Light": "#9a9a9a", "Dark": "#6a6a6a" },
+				"OnBrand":     { "Light": "#ffffff", "Dark": "#0e0e0e" }
 			},
 			"Brand": {
 				"Primary":      { "Light": "#3357c7", "Dark": "#6b8eff" },

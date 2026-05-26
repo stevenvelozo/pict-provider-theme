@@ -173,7 +173,7 @@ suite
 			{
 				test
 				(
-					'applyTheme on paired theme should inject :root + .theme-dark blocks',
+					'applyTheme on paired theme should emit the four-block cascade (:root + @media + .theme-light + .theme-dark)',
 					(fDone) =>
 					{
 						let tmpDoc = createStubDocument();
@@ -186,12 +186,105 @@ suite
 						libAssert.strictEqual(tmpEl.id, 'pict-theme');
 
 						let tmpCSS = tmpEl.textContent;
-						libAssert.ok(tmpCSS.indexOf(':root {') >= 0, 'should contain :root block');
-						libAssert.ok(tmpCSS.indexOf('.theme-dark {') >= 0, 'should contain .theme-dark block');
-						libAssert.ok(tmpCSS.indexOf('--theme-color-background-primary: #ffffff;') >= 0, 'light value in :root');
-						libAssert.ok(tmpCSS.indexOf('--theme-color-background-primary: #1a1a1a;') >= 0, 'dark value in .theme-dark');
+						// All four blocks present.
+						libAssert.ok(tmpCSS.indexOf(':root {') >= 0,                              'should contain :root block');
+						libAssert.ok(tmpCSS.indexOf('@media (prefers-color-scheme: dark) {') >= 0, 'should contain @media block — system mode is CSS-driven, no JS listener');
+						libAssert.ok(tmpCSS.indexOf('.theme-light {') >= 0,                       'should contain .theme-light block — explicit light override');
+						libAssert.ok(tmpCSS.indexOf('.theme-dark {') >= 0,                        'should contain .theme-dark block — explicit dark override');
+						// Token values land in the right blocks.
+						libAssert.ok(tmpCSS.indexOf('--theme-color-background-primary: #ffffff;') >= 0, 'light value present');
+						libAssert.ok(tmpCSS.indexOf('--theme-color-background-primary: #1a1a1a;') >= 0, 'dark value present');
+						// Cascade order: explicit overrides must come AFTER @media so they win on a class match.
+						libAssert.ok(tmpCSS.indexOf('@media') < tmpCSS.indexOf('.theme-light'), '@media must precede .theme-light');
+						libAssert.ok(tmpCSS.indexOf('.theme-light') < tmpCSS.indexOf('.theme-dark'), '.theme-light must precede .theme-dark');
 
 						tearDownDocument();
+						fDone();
+					}
+				);
+
+				test
+				(
+					'applyTheme with mode="system" should NOT set theme-light or theme-dark on <html> — CSS @media drives the cascade',
+					(fDone) =>
+					{
+						let tmpDoc = createStubDocument();
+						let tmpProv = createProvider(tmpDoc);
+						tmpProv.registerTheme(_ThemeDefault);
+						tmpProv.applyTheme('pict-default', 'system');
+
+						let tmpClasses = tmpDoc._getHTMLClasses();
+						libAssert.ok(tmpClasses.indexOf('theme-light') < 0, 'no theme-light class in system mode');
+						libAssert.ok(tmpClasses.indexOf('theme-dark') < 0,  'no theme-dark class in system mode');
+
+						let tmpActive = tmpProv.getActiveTheme();
+						libAssert.strictEqual(tmpActive.Mode, 'system');
+						libAssert.ok(tmpActive.ResolvedMode === 'light' || tmpActive.ResolvedMode === 'dark',
+							'ResolvedMode is live-read from the OS preference');
+
+						tearDownDocument();
+						fDone();
+					}
+				);
+
+				test
+				(
+					'switching from explicit dark back to system clears the html class',
+					(fDone) =>
+					{
+						let tmpDoc = createStubDocument();
+						let tmpProv = createProvider(tmpDoc);
+						tmpProv.registerTheme(_ThemeDefault);
+						tmpProv.applyTheme('pict-default', 'dark');
+						libAssert.ok(tmpDoc._getHTMLClasses().indexOf('theme-dark') >= 0, 'precondition: theme-dark set');
+
+						tmpProv.setMode('system');
+						let tmpClasses = tmpDoc._getHTMLClasses();
+						libAssert.ok(tmpClasses.indexOf('theme-light') < 0, 'theme-light cleared');
+						libAssert.ok(tmpClasses.indexOf('theme-dark') < 0,  'theme-dark cleared');
+
+						tearDownDocument();
+						fDone();
+					}
+				);
+
+				test
+				(
+					'provider never attaches a DOM listener — system mode is CSS-only',
+					(fDone) =>
+					{
+						// Spy on matchMedia: track addEventListener/addListener calls.
+						let tmpListenerCount = 0;
+						let tmpRealWindow = global.window;
+						global.window =
+						{
+							matchMedia: function ()
+							{
+								return {
+									matches: false,
+									addEventListener: function () { tmpListenerCount++; },
+									addListener:      function () { tmpListenerCount++; },
+									removeEventListener: function () {},
+									removeListener:      function () {}
+								};
+							}
+						};
+
+						let tmpDoc = createStubDocument();
+						let tmpProv = createProvider(tmpDoc);
+						tmpProv.registerTheme(_ThemeDefault);
+						// Exercise all modes.
+						tmpProv.applyTheme('pict-default', 'system');
+						tmpProv.setMode('dark');
+						tmpProv.setMode('system');
+						tmpProv.setMode('light');
+						tmpProv.unapplyTheme();
+
+						libAssert.strictEqual(tmpListenerCount, 0,
+							'provider must not attach any matchMedia listener under any mode');
+
+						tearDownDocument();
+						global.window = tmpRealWindow;
 						fDone();
 					}
 				);

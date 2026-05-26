@@ -31,6 +31,7 @@
  * @license MIT
  */
 const libPictProvider = require('pict-provider');
+const libDiagramAdapter = require('./Theme-Diagram-Adapter.js');
 
 const _ProviderConfiguration =
 {
@@ -56,10 +57,28 @@ class PictProviderTheme extends libPictProvider
 		this._activeHash = null;
 		this._activeMode = null;
 		this._resolvedMode = null;
-		this._systemMediaQuery = null;
-		this._systemListener = null;
 		this._registeredCSSHashes = [];
 		this._applyListeners = [];
+
+		// Diagram adapter: helper API for plugging Mermaid (and any
+		// future SVG-baking diagram engine) into the theme lifecycle.
+		// Exposes the same functions as the standalone require, plus
+		// `adaptMermaid(mermaid, options)` bound to this provider.
+		let tmpSelf = this;
+		this.diagram =
+		{
+			MERMAID_TOKEN_MAP:           libDiagramAdapter.MERMAID_TOKEN_MAP,
+			readCSSVar:                  libDiagramAdapter.readCSSVar,
+			getMermaidTokenMap:          libDiagramAdapter.getMermaidTokenMap,
+			buildMermaidThemeVariables:  libDiagramAdapter.buildMermaidThemeVariables,
+			initializeMermaid:           libDiagramAdapter.initializeMermaid,
+			stashMermaidSource:          libDiagramAdapter.stashMermaidSource,
+			refreshMermaidDiagrams:      libDiagramAdapter.refreshMermaidDiagrams,
+			adaptMermaid: function (pMermaid, pOptions)
+			{
+				return libDiagramAdapter.adaptMermaid(tmpSelf, pMermaid, pOptions);
+			}
+		};
 
 		// Auto-register the four theme template expressions if the host pict
 		// supports addTemplate.  In bare-fable/test contexts this is skipped.
@@ -274,8 +293,6 @@ class PictProviderTheme extends libPictProvider
 	 */
 	unapplyTheme()
 	{
-		this._detachSystemListener();
-
 		if (typeof document !== 'undefined')
 		{
 			let tmpStyleEl = document.getElementById(STYLE_ELEMENT_ID);
@@ -308,10 +325,13 @@ class PictProviderTheme extends libPictProvider
 
 	getActiveTheme()
 	{
+		// Live-read ResolvedMode so callers in system mode get the current OS
+		// preference without the provider having to subscribe to media-query
+		// changes.  Snapshot mode (explicit light/dark) returns as-is.
 		return {
 			Hash: this._activeHash,
 			Mode: this._activeMode,
-			ResolvedMode: this._resolvedMode
+			ResolvedMode: this._activeHash ? this._currentResolvedMode() : null
 		};
 	}
 
@@ -451,12 +471,16 @@ class PictProviderTheme extends libPictProvider
 	/**
 	 * If pValue is a paired-mode object {Light, Dark}, pick the value matching
 	 * the current resolved mode.  Otherwise return as-is.
+	 *
+	 * For system mode this re-reads the OS preference on every call so the
+	 * value is always live-correct — no JS listener required to keep it in
+	 * sync.  Explicit modes use the snapshotted `_resolvedMode`.
 	 */
 	_resolveModedValue(pValue)
 	{
 		if (this._isPairedValue(pValue))
 		{
-			let tmpMode = this._resolvedMode || 'light';
+			let tmpMode = this._currentResolvedMode();
 			let tmpKey = (tmpMode === 'dark') ? 'Dark' : 'Light';
 			return pValue[tmpKey];
 		}
@@ -473,9 +497,26 @@ class PictProviderTheme extends libPictProvider
 	}
 
 	/**
-	 * Build the CSS string for a theme.  For single-mode themes, emits a
-	 * single :root block.  For paired themes, emits :root for the Light
-	 * variant and a .theme-dark { ... } block for the Dark variant.
+	 * Build the CSS string for a theme.
+	 *
+	 * Single-mode themes emit one `:root { ... }` block.
+	 *
+	 * Paired themes emit four blocks, ordered so the CSS cascade resolves
+	 * to the right mode without any JS listeners:
+	 *
+	 *   1) `:root { ...light... }`                                — baseline
+	 *   2) `@media (prefers-color-scheme: dark) { :root { ...dark... } }`
+	 *                                                            — OS-driven
+	 *   3) `.theme-light { ...light... }`                         — explicit override
+	 *   4) `.theme-dark  { ...dark... }`                          — explicit override
+	 *
+	 * Mode = 'system' is "no class on <html>" — the @media rule drives.
+	 * Mode = 'light'/'dark' adds the matching class which wins on tie via
+	 * source order (same specificity as :root, but later in the file).
+	 *
+	 * The result: OS toggle moves the page via CSS alone, no DOM listener
+	 * needed, no class flipping.  Explicit setMode() flips the class to
+	 * lock the page to one mode regardless of OS preference.
 	 *
 	 * Only values under bundle.Tokens become CSS custom properties.
 	 */
@@ -505,8 +546,10 @@ class PictProviderTheme extends libPictProvider
 			return tmpCSS;
 		}
 
-		let tmpRootCSS = ':root {\n';
-		let tmpDarkCSS = '.' + HTML_CLASS_DARK + ' {\n';
+		// Paired theme: emit the four-block cascade.
+		let tmpLightLines = '';
+		let tmpDarkLines = '';
+		let tmpFixedLines = '';
 
 		for (let i = 0; i < tmpFlat.length; i++)
 		{
@@ -516,25 +559,40 @@ class PictProviderTheme extends libPictProvider
 			{
 				if (typeof tmpEntry.Value.Light !== 'undefined')
 				{
-					tmpRootCSS += '\t' + tmpVarName + ': ' + this._formatCSSValue(tmpEntry.Value.Light) + ';\n';
+					tmpLightLines += '\t' + tmpVarName + ': ' + this._formatCSSValue(tmpEntry.Value.Light) + ';\n';
 				}
 				if (typeof tmpEntry.Value.Dark !== 'undefined')
 				{
-					tmpDarkCSS += '\t' + tmpVarName + ': ' + this._formatCSSValue(tmpEntry.Value.Dark) + ';\n';
+					tmpDarkLines += '\t' + tmpVarName + ': ' + this._formatCSSValue(tmpEntry.Value.Dark) + ';\n';
 				}
 			}
 			else
 			{
-				tmpRootCSS += '\t' + tmpVarName + ': ' + this._formatCSSValue(tmpEntry.Value) + ';\n';
+				// Non-paired tokens (spacing, typography, etc.) live in :root only.
+				tmpFixedLines += '\t' + tmpVarName + ': ' + this._formatCSSValue(tmpEntry.Value) + ';\n';
 			}
 		}
 
-		// Aliases live in :root only.  Their var() targets resolve to the
-		// active mode's value automatically — no need to duplicate in dark.
-		tmpRootCSS += tmpAliasLines;
-		tmpRootCSS += '}\n';
-		tmpDarkCSS += '}\n';
-		return tmpRootCSS + tmpDarkCSS;
+		// Block 1: :root holds light values + every non-paired token + aliases.
+		// Aliases use var() indirection, so they resolve to the active mode
+		// automatically without being duplicated in the dark blocks.
+		let tmpCSS = ':root {\n' + tmpLightLines + tmpFixedLines + tmpAliasLines + '}\n';
+
+		// Block 2: @media (prefers-color-scheme: dark) — OS-driven dark override.
+		// Only the paired tokens need to flip; fixed tokens and aliases stay
+		// the same.  Indented one level for readability.
+		let tmpMediaInner = '';
+		let tmpDarkLinesIndented = tmpDarkLines.replace(/^\t/gm, '\t\t');
+		tmpMediaInner += '\t:root {\n' + tmpDarkLinesIndented + '\t}\n';
+		tmpCSS += '@media (prefers-color-scheme: dark) {\n' + tmpMediaInner + '}\n';
+
+		// Block 3: .theme-light — explicit override that locks light regardless of OS.
+		tmpCSS += '.' + HTML_CLASS_LIGHT + ' {\n' + tmpLightLines + '}\n';
+
+		// Block 4: .theme-dark — explicit override that locks dark regardless of OS.
+		tmpCSS += '.' + HTML_CLASS_DARK + ' {\n' + tmpDarkLines + '}\n';
+
+		return tmpCSS;
 	}
 
 	/**
@@ -649,22 +707,31 @@ class PictProviderTheme extends libPictProvider
 	}
 
 	/**
-	 * Set or update the `theme-light` / `theme-dark` class on <html>.
-	 * For 'system', subscribes to prefers-color-scheme.
+	 * Apply the requested mode by adjusting the class on <html>.
+	 *
+	 *   - 'light' / 'dark': the matching class is added so the explicit
+	 *     `.theme-light` / `.theme-dark` block in the injected stylesheet
+	 *     overrides the @media (prefers-color-scheme) rule.
+	 *   - 'system': both classes are cleared so the @media rule drives
+	 *     the cascade from the OS preference, with no JS listener needed.
+	 *
+	 * `_resolvedMode` is snapshotted at apply time so synchronous reads
+	 * via `token()` / `getActiveTheme()` return a consistent value.  In
+	 * system mode it falls back to `_currentResolvedMode()` for callers
+	 * that want a live read on each call.
 	 */
 	_applyMode(pMode, pStrategy)
 	{
-		this._detachSystemListener();
-
-		let tmpResolved = pMode;
 		if (pMode === 'system')
 		{
-			tmpResolved = this._readSystemPreference();
-			this._attachSystemListener(pStrategy);
+			this._resolvedMode = this._readSystemPreference();
+			this._clearHTMLClass();
 		}
-
-		this._resolvedMode = (tmpResolved === 'dark') ? 'dark' : 'light';
-		this._writeHTMLClass(this._resolvedMode);
+		else
+		{
+			this._resolvedMode = (pMode === 'dark') ? 'dark' : 'light';
+			this._writeHTMLClass(this._resolvedMode);
+		}
 	}
 
 	_writeHTMLClass(pResolvedMode)
@@ -683,6 +750,14 @@ class PictProviderTheme extends libPictProvider
 		}
 	}
 
+	_clearHTMLClass()
+	{
+		if (typeof document === 'undefined' || !document.documentElement || !document.documentElement.classList) return;
+		let tmpList = document.documentElement.classList;
+		tmpList.remove(HTML_CLASS_LIGHT);
+		tmpList.remove(HTML_CLASS_DARK);
+	}
+
 	_readSystemPreference()
 	{
 		if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'light';
@@ -696,56 +771,21 @@ class PictProviderTheme extends libPictProvider
 		}
 	}
 
-	_attachSystemListener(pStrategy)
+	/**
+	 * The mode currently driving the page.  Mirrors what the user sees:
+	 * explicit modes return their literal value; 'system' reads the OS
+	 * preference fresh so token() / getActiveTheme() never report a
+	 * stale value when the OS toggles between calls.
+	 *
+	 * @returns {'light'|'dark'}
+	 */
+	_currentResolvedMode()
 	{
-		if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-		try
+		if (this._activeMode === 'system')
 		{
-			let tmpSelf = this;
-			let tmpMQ = window.matchMedia('(prefers-color-scheme: dark)');
-			let tmpHandler = function ()
-			{
-				let tmpResolved = tmpMQ.matches ? 'dark' : 'light';
-				tmpSelf._resolvedMode = tmpResolved;
-				tmpSelf._writeHTMLClass(tmpResolved);
-			};
-			if (typeof tmpMQ.addEventListener === 'function')
-			{
-				tmpMQ.addEventListener('change', tmpHandler);
-			}
-			else if (typeof tmpMQ.addListener === 'function')
-			{
-				tmpMQ.addListener(tmpHandler);
-			}
-			this._systemMediaQuery = tmpMQ;
-			this._systemListener = tmpHandler;
+			return this._readSystemPreference();
 		}
-		catch (pError)
-		{
-			// Older browser; leave system listener unattached.
-		}
-	}
-
-	_detachSystemListener()
-	{
-		if (!this._systemMediaQuery || !this._systemListener) return;
-		try
-		{
-			if (typeof this._systemMediaQuery.removeEventListener === 'function')
-			{
-				this._systemMediaQuery.removeEventListener('change', this._systemListener);
-			}
-			else if (typeof this._systemMediaQuery.removeListener === 'function')
-			{
-				this._systemMediaQuery.removeListener(this._systemListener);
-			}
-		}
-		catch (pError)
-		{
-			// noop
-		}
-		this._systemMediaQuery = null;
-		this._systemListener = null;
+		return (this._resolvedMode === 'dark') ? 'dark' : 'light';
 	}
 }
 
@@ -756,3 +796,4 @@ module.exports.STYLE_ELEMENT_ID = STYLE_ELEMENT_ID;
 module.exports.HTML_CLASS_LIGHT = HTML_CLASS_LIGHT;
 module.exports.HTML_CLASS_DARK = HTML_CLASS_DARK;
 module.exports.CSS_VAR_PREFIX = CSS_VAR_PREFIX;
+module.exports.DiagramAdapter = libDiagramAdapter;
