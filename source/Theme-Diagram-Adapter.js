@@ -222,7 +222,21 @@ function refreshMermaidDiagrams(pSelectorOrRoot)
 
 	try
 	{
-		return tmpMermaid.run({ nodes: tmpRendered });
+		let tmpResult = tmpMermaid.run({ nodes: tmpRendered });
+		// After mermaid finishes drawing, strip the !important flags it
+		// bakes into per-node inline fill/stroke styles. See
+		// stripMermaidStyleImportance() docs for the why.
+		if (tmpResult && typeof tmpResult.then === 'function')
+		{
+			return tmpResult.then(function ()
+			{
+				stripMermaidStyleImportance(tmpRendered);
+				return tmpResult;
+			});
+		}
+		// Synchronous fallback (older mermaid versions).
+		stripMermaidStyleImportance(tmpRendered);
+		return tmpResult;
 	}
 	catch (pError)
 	{
@@ -230,6 +244,90 @@ function refreshMermaidDiagrams(pSelectorOrRoot)
 		// most cases.  Return a rejected promise so .catch() consumers fire.
 		return Promise.reject(pError);
 	}
+}
+
+/**
+ * Mermaid 11's flowchart `style X fill:#...` directive emits the fill
+ * and stroke inline with `!important`:
+ *
+ *   <rect class="basic label-container"
+ *         style="fill:#e8f5e9 !important;stroke:#43a047 !important"/>
+ *
+ * Inline `!important` beats external `!important` via specificity, so
+ * any theme-aware CSS we write (e.g. `.theme-dark ... { fill: theme-bg
+ * !important }`) silently loses no matter how strong its selector.
+ * Diagrams keep their Material pastels even in dark themes — light
+ * fills with light text = unreadable.
+ *
+ * Strip just the `!important` flag off mermaid-emitted inline styles
+ * after every render.  The fill/stroke values themselves stay intact,
+ * so light mode keeps the author-intended palette; in dark mode the
+ * external `.theme-dark` CSS now reaches the rect and recolors to a
+ * theme-aware background.
+ *
+ * Must run after every mermaid render — initial + every re-render
+ * triggered by a theme change.  `refreshMermaidDiagrams` calls it on
+ * re-renders; the initial render in pict-section-content's view calls
+ * it via the provider's `diagram.stripMermaidStyleImportance` handle.
+ *
+ * @param {string|Element|NodeList|Array} [pTarget]
+ *   - omitted: scan the whole document
+ *   - string: querySelector scope (e.g. '#Pict-Content-Body')
+ *   - Element: scan within this element
+ *   - NodeList/Array of `pre.mermaid` elements: scan within each
+ * @returns {number} count of shapes that had !important stripped
+ */
+function stripMermaidStyleImportance(pTarget)
+{
+	if (typeof document === 'undefined') { return 0; }
+
+	let tmpMermaids;
+	if (!pTarget)
+	{
+		tmpMermaids = document.querySelectorAll('pre.mermaid');
+	}
+	else if (typeof pTarget === 'string')
+	{
+		let tmpScope = document.querySelector(pTarget);
+		tmpMermaids = tmpScope ? tmpScope.querySelectorAll('pre.mermaid') : [];
+	}
+	else if (pTarget.length !== undefined)
+	{
+		// NodeList or Array of pre.mermaid elements
+		tmpMermaids = pTarget;
+	}
+	else if (pTarget.querySelectorAll)
+	{
+		tmpMermaids = pTarget.querySelectorAll('pre.mermaid');
+	}
+	else
+	{
+		return 0;
+	}
+
+	let tmpStripped = 0;
+	for (let i = 0; i < tmpMermaids.length; i++)
+	{
+		let tmpMerm = tmpMermaids[i];
+		if (!tmpMerm || !tmpMerm.querySelectorAll) { continue; }
+		let tmpShapes = tmpMerm.querySelectorAll(
+			'.node rect[style*="!important"], ' +
+			'.node polygon[style*="!important"], ' +
+			'.node circle[style*="!important"], ' +
+			'.node ellipse[style*="!important"], ' +
+			'.node path[style*="!important"], ' +
+			'.cluster rect[style*="!important"]'
+		);
+		for (let j = 0; j < tmpShapes.length; j++)
+		{
+			let tmpEl = tmpShapes[j];
+			let tmpStyle = tmpEl.getAttribute('style') || '';
+			if (tmpStyle.indexOf('!important') < 0) { continue; }
+			tmpEl.setAttribute('style', tmpStyle.replace(/\s*!important\s*/gi, ''));
+			tmpStripped++;
+		}
+	}
+	return tmpStripped;
 }
 
 function _resolveMermaidNodes(pSelectorOrRoot)
@@ -339,5 +437,6 @@ module.exports =
 	initializeMermaid: initializeMermaid,
 	stashMermaidSource: stashMermaidSource,
 	refreshMermaidDiagrams: refreshMermaidDiagrams,
+	stripMermaidStyleImportance: stripMermaidStyleImportance,
 	adaptMermaid: adaptMermaid
 };

@@ -74,6 +74,7 @@ class PictProviderTheme extends libPictProvider
 			initializeMermaid:           libDiagramAdapter.initializeMermaid,
 			stashMermaidSource:          libDiagramAdapter.stashMermaidSource,
 			refreshMermaidDiagrams:      libDiagramAdapter.refreshMermaidDiagrams,
+			stripMermaidStyleImportance: libDiagramAdapter.stripMermaidStyleImportance,
 			adaptMermaid: function (pMermaid, pOptions)
 			{
 				return libDiagramAdapter.adaptMermaid(tmpSelf, pMermaid, pOptions);
