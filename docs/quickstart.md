@@ -41,7 +41,7 @@ tmpTheme.registerTheme(require('pict-provider-theme/source/themes/retold-mono.js
 
 `registerTheme(pBundle)` returns `true` on success, or `false` if the bundle is not an object or is missing a string `Hash`. Registration is **idempotent on `Hash`**: registering a bundle with a hash that already exists replaces the stored entry (and keeps its position in the list). That is what enables a live "edit, re-register, re-apply" loop.
 
-To enumerate what is registered &mdash; for example to build a theme picker &mdash; use `listThemes()`:
+To enumerate what is registered - for example to build a theme picker - use `listThemes()`:
 
 ```javascript
 let tmpList = tmpTheme.listThemes();
@@ -62,7 +62,7 @@ tmpTheme.applyTheme('pict-default', 'system');
 - Sets the mode class on `<html>` (or clears it, for system mode).
 - Fires any `onApply` listeners.
 
-It returns `true`, or `false` if the hash is unknown. `pMode` is optional &mdash; when omitted, the theme's `Modes.Default` is used. For a `single`-strategy theme, the mode argument is ignored (clamped to the default).
+It returns `true`, or `false` if the hash is unknown. `pMode` is optional - when omitted, the theme's `Modes.Default` is used. For a `single`-strategy theme, the mode argument is ignored (clamped to the default).
 
 Now any CSS in your application can read the tokens:
 
@@ -92,7 +92,7 @@ tmpTheme.setMode('system');   // follow the OS prefers-color-scheme
 `setMode(pMode)` returns `true` on success, or `false` if there is no active theme or the active theme is `single`-strategy. It adjusts the class on `<html>` and re-fires `onApply` listeners; it does not rebuild the CSS (the injected stylesheet already carries both light and dark blocks).
 
 - **`light` / `dark`** add a `theme-light` / `theme-dark` class on `<html>`.
-- **`system`** clears both classes and lets the `@media (prefers-color-scheme: dark)` rule in the injected stylesheet drive the page. The OS toggle moves the page through CSS alone &mdash; the provider attaches no media-query listener.
+- **`system`** clears both classes and lets the `@media (prefers-color-scheme: dark)` rule in the injected stylesheet drive the page. The OS toggle moves the page through CSS alone - the provider attaches no media-query listener.
 
 See [Architecture](architecture.md) for why this works without any JavaScript event handler.
 
@@ -116,16 +116,16 @@ When the provider registered its template expressions (step 1), you can resolve 
 
 | Expression | Resolves to |
 |------------|-------------|
-| `{~Theme:Path~}` | The raw value at `Path` (walked from the bundle root, e.g. `Tokens.Color.…` or `Brand.Name`), at the current resolved mode. Empty string if missing or no active theme. |
-| `{~ThemeVar:Path~}` | `var(--theme-…)` for `Path` relative to `Tokens` (e.g. `Color.Background.Panel`). |
+| `{~Theme:Path~}` | The raw value at `Path` (walked from the bundle root, e.g. `Tokens.Color....` or `Brand.Name`), at the current resolved mode. Empty string if missing or no active theme. |
+| `{~ThemeVar:Path~}` | `var(--theme-...)` for `Path` relative to `Tokens` (e.g. `Color.Background.Panel`). |
 | `{~ThemeAsset:Category.Name~}` | The asset content at `bundle.<Category>.<Name>` (e.g. `SVG.Logo`, `SVG.Icons.Foo`). |
-| `{~ThemeImage:Name~}` | `bundle.Image.<Name>` &mdash; convenience for `{~ThemeAsset:Image.Name~}`. |
+| `{~ThemeImage:Name~}` | `bundle.Image.<Name>` - convenience for `{~ThemeAsset:Image.Name~}`. |
 
 Each expression renders the empty string when no theme is active, when the path is missing, or when no Theme provider is registered.
 
 ## 6. Read tokens from JavaScript
 
-For consumers that cannot read CSS variables &mdash; canvas, WebGL, charting and diagram libraries &mdash; resolve values directly:
+For consumers that cannot read CSS variables - canvas, WebGL, charting and diagram libraries - resolve values directly:
 
 ```javascript
 tmpTheme.token('Tokens.Color.Background.Primary');  // raw value at the active mode
@@ -136,8 +136,8 @@ tmpTheme.asset('SVG', 'Icons.Foo');                 // arbitrary nested asset, o
 ```
 
 - `token(pPath)` walks from the bundle root, so it takes the full path including the `Tokens.` prefix. For a paired value it returns the side matching the currently resolved mode. In system mode the resolved mode is read fresh on each call, so the value is never stale. Returns `null` for missing paths or when no theme is active.
-- `cssVar(pTokenPath)` takes a path **relative to `Tokens`** and returns the `var(--theme-…)` reference.
-- `svg(pName)` / `image(pName)` are shortcuts for `asset('SVG', …)` / `asset('Image', …)`.
+- `cssVar(pTokenPath)` takes a path **relative to `Tokens`** and returns the `var(--theme-...)` reference.
+- `svg(pName)` / `image(pName)` are shortcuts for `asset('SVG', ...)` / `asset('Image', ...)`.
 
 To read the current state:
 
@@ -154,8 +154,8 @@ Consumers that bake colors at render time (e.g. a diagram engine that writes fil
 ```javascript
 let tmpDispose = tmpTheme.onApply((pBundle, pContext) =>
 {
-	// pBundle    — the effective (BasedOn-resolved) bundle
-	// pContext   — { Hash, Mode, ResolvedMode }
+	// pBundle    - the effective (BasedOn-resolved) bundle
+	// pContext   - { Hash, Mode, ResolvedMode }
 	repaintMyCanvas(pBundle);
 });
 
@@ -185,5 +185,5 @@ if (tmpSaved)
 
 ## Next steps
 
-- [Architecture](architecture.md) &mdash; the CSS cascade, theme inheritance, and the apply lifecycle.
-- [Theme Bundles & theme-build](theme-bundles.md) &mdash; authoring and compiling your own bundles.
+- [Architecture](architecture.md) - the CSS cascade, theme inheritance, and the apply lifecycle.
+- [Theme Bundles & theme-build](theme-bundles.md) - authoring and compiling your own bundles.

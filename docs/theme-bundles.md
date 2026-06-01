@@ -41,29 +41,29 @@ A theme bundle is a single self-contained JSON object that `registerTheme()` acc
 | `Modes.Strategy` | no | `single`, `paired`, or `system`. Defaults to `single`. |
 | `Modes.Default` | no | The mode used when `applyTheme` is called without one. Defaults to `light`. |
 | `Tokens` | yes (effectively) | The nested token map. Only values here become `--theme-*` custom properties. |
-| `Brand` | no | Arbitrary brand metadata (name, tagline, …). Reachable via `token('Brand.…')`. |
-| `Aliases` | no | Map of `{ "--legacy-name": "Token.Path" }`. Each becomes a `--legacy-name: var(--theme-…)` line. |
+| `Brand` | no | Arbitrary brand metadata (name, tagline, ...). Reachable via `token('Brand....')`. |
+| `Aliases` | no | Map of `{ "--legacy-name": "Token.Path" }`. Each becomes a `--legacy-name: var(--theme-...)` line. |
 | `CSS` | no | Array of `{ Hash, Content, Priority }` CSS riders registered through Pict's CSS cascade. |
-| `SVG` | no | Named SVG assets; may be nested. Reachable via `svg()` / `{~ThemeAsset:SVG.…~}`. |
-| `Image` | no | Named images (URLs or base64 data URLs). Reachable via `image()` / `{~ThemeImage:…~}`. |
+| `SVG` | no | Named SVG assets; may be nested. Reachable via `svg()` / `{~ThemeAsset:SVG....~}`. |
+| `Image` | no | Named images (URLs or base64 data URLs). Reachable via `image()` / `{~ThemeImage:...~}`. |
 
 ### Tokens and paired values
 
 A token leaf is either a primitive value (one mode) or a `{ Light, Dark }` pair. Paired leaves are what make a theme switch between light and dark; the provider picks the side matching the resolved mode. Non-paired tokens (spacing, typography, radii, durations, z-indices) apply to all modes.
 
-You can nest tokens however you like &mdash; the path becomes the custom-property name. The bundled `pict-default` theme uses these top-level groups under `Tokens` as a reference vocabulary: `Color`, `Typography`, `Spacing`, `Radius`, `Shadow`, `ZIndex`, `Duration`. These are conventions of that theme, not requirements of the provider; author whatever structure your application needs.
+You can nest tokens however you like - the path becomes the custom-property name. The bundled `pict-default` theme uses these top-level groups under `Tokens` as a reference vocabulary: `Color`, `Typography`, `Spacing`, `Radius`, `Shadow`, `ZIndex`, `Duration`. These are conventions of that theme, not requirements of the provider; author whatever structure your application needs.
 
 ## Authoring an unrolled theme folder
 
-Hand-maintaining a large JSON bundle &mdash; especially one with embedded SVG and base64 images &mdash; is awkward. The `theme-build` compiler lets you author a theme as a folder and compile it to a single bundle:
+Hand-maintaining a large JSON bundle - especially one with embedded SVG and base64 images - is awkward. The `theme-build` compiler lets you author a theme as a folder and compile it to a single bundle:
 
 ```
 themes/
   my-theme/
-    manifest.json     required — { Hash, Name, Modes, Tokens, ... }
-    css/              optional — each .css file becomes a CSS rider entry
-    svg/              optional — each .svg becomes an SVG entry; subfolders nest
-    image/            optional — each file becomes a base64 data URL
+    manifest.json     required - { Hash, Name, Modes, Tokens, ... }
+    css/              optional - each .css file becomes a CSS rider entry
+    svg/              optional - each .svg becomes an SVG entry; subfolders nest
+    image/            optional - each file becomes a base64 data URL
 ```
 
 The reference folder lives at [`examples/themes/sample-theme/`](https://fable-retold.github.io/pict-provider-theme/), which exercises every input: manifest tokens, two CSS files, a nested SVG folder, and an image folder.
@@ -72,12 +72,12 @@ The reference folder lives at [`examples/themes/sample-theme/`](https://fable-re
 
 The manifest carries everything except the file-derived assets. Fields passed through verbatim into the compiled bundle:
 
-`Hash`, `Name`, `Version`, `Description`, `Comprehensive`, `BasedOn`, `Modes`, `Tokens`, `Brand`, `Aliases` (and any other non-structural field you add &mdash; arbitrary metadata is preserved).
+`Hash`, `Name`, `Version`, `Description`, `Comprehensive`, `BasedOn`, `Modes`, `Tokens`, `Brand`, `Aliases` (and any other non-structural field you add - arbitrary metadata is preserved).
 
 Fields the compiler reads to control compilation (not emitted verbatim):
 
-- **`CSSManifest`** &mdash; optional array of `{ File, Priority, Hash? }` controlling which CSS files (under `css/`) are emitted, in what order, and with what priorities. When present, files in `css/` **not** listed are skipped, and a referenced file that does not exist is an error.
-- **`SVG`** / **`Image`** &mdash; optional pre-set maps. Entries here are deep-merged over filesystem discovery, so a manifest entry overrides a same-keyed file.
+- **`CSSManifest`** - optional array of `{ File, Priority, Hash? }` controlling which CSS files (under `css/`) are emitted, in what order, and with what priorities. When present, files in `css/` **not** listed are skipped, and a referenced file that does not exist is an error.
+- **`SVG`** / **`Image`** - optional pre-set maps. Entries here are deep-merged over filesystem discovery, so a manifest entry overrides a same-keyed file.
 
 ### css/
 
@@ -96,14 +96,14 @@ PascalCasing splits on spaces, hyphens, and underscores: `icon-foo`, `icon_foo`,
 
 ### image/
 
-Each file becomes a base64 **data URL** under the bundle's `Image` map, with the same PascalCased-key / nested-folder rules as `svg/`. The MIME type is inferred from the extension (`.png`, `.jpg`/`.jpeg`, `.gif`, `.webp`, `.ico`, `.svg`; anything else falls back to `application/octet-stream`). Embedding images as data URLs is what makes the compiled bundle fully self-contained &mdash; no separate asset pipeline at runtime.
+Each file becomes a base64 **data URL** under the bundle's `Image` map, with the same PascalCased-key / nested-folder rules as `svg/`. The MIME type is inferred from the extension (`.png`, `.jpg`/`.jpeg`, `.gif`, `.webp`, `.ico`, `.svg`; anything else falls back to `application/octet-stream`). Embedding images as data URLs is what makes the compiled bundle fully self-contained - no separate asset pipeline at runtime.
 
 ## The compiled output
 
 `theme-build` writes `<outDir>/<Hash>.json`. Alongside the passed-through manifest fields and the collected `CSS` / `SVG` / `Image`, the compiler stamps two fields:
 
-- `CompiledAt` &mdash; an ISO timestamp.
-- `CompilerVersion` &mdash; the compiler version integer (currently `1`).
+- `CompiledAt` - an ISO timestamp.
+- `CompilerVersion` - the compiler version integer (currently `1`).
 
 The result is ready for `registerTheme()` with no further transformation.
 
@@ -133,7 +133,7 @@ When the config is absent, it defaults to `{ Source: "themes", Output: "theme", 
 
 ### As a standalone CLI
 
-The module also ships a dependency-light `pict-theme-build` binary that needs no quackage &mdash; suitable for CI / GitHub Actions:
+The module also ships a dependency-light `pict-theme-build` binary that needs no quackage - suitable for CI / GitHub Actions:
 
 ```bash
 # Compile one theme folder; output defaults to a sibling "theme" folder:
@@ -149,15 +149,15 @@ It exits `0` on success and `1` on any failure.
 
 ### As a Node module
 
-Both functions are plain Node &mdash; no Pict, no DOM:
+Both functions are plain Node - no Pict, no DOM:
 
 ```javascript
 const libThemeCompiler = require('pict-provider-theme/source/Theme-Compiler.js');
 
-// Compile one folder → bundle object (and write it if an out dir is given):
+// Compile one folder -> bundle object (and write it if an out dir is given):
 let tmpBundle = libThemeCompiler.compileTheme('themes/my-theme', 'theme');
 
-// Compile every theme folder under a root → [ { Hash, Path, Bundle }, ... ]:
+// Compile every theme folder under a root -> [ { Hash, Path, Bundle }, ... ]:
 let tmpResults = libThemeCompiler.compileAllThemes('themes', 'theme');
 
 // Pass { Pretty: false } as the third argument to minify the written JSON.
@@ -167,10 +167,10 @@ let tmpResults = libThemeCompiler.compileAllThemes('themes', 'theme');
 
 ## Previewing a bundle
 
-The module ships a companion `theme-screenshot` command (a quackage command and a `pict-theme-screenshot` binary) that drives the Theme Playground with a given bundle and captures a folder of screenshots &mdash; every section in every mode. It requires the optional `puppeteer` peer dependency. Point it at a compiled JSON bundle or an unrolled folder via `.quackage.json` `ThemeScreenshot.ThemePath` or as a command argument.
+The module ships a companion `theme-screenshot` command (a quackage command and a `pict-theme-screenshot` binary) that drives the Theme Playground with a given bundle and captures a folder of screenshots - every section in every mode. It requires the optional `puppeteer` peer dependency. Point it at a compiled JSON bundle or an unrolled folder via `.quackage.json` `ThemeScreenshot.ThemePath` or as a command argument.
 
 ## See also
 
-- [Quickstart](quickstart.md) &mdash; registering and applying a bundle.
-- [Architecture](architecture.md) &mdash; how `Tokens`, `Aliases`, and `CSS` are turned into the live stylesheet.
-- The [Theme Playground](examples/theme-playground/README.md) &mdash; author a bundle interactively and export it ready for compilation.
+- [Quickstart](quickstart.md) - registering and applying a bundle.
+- [Architecture](architecture.md) - how `Tokens`, `Aliases`, and `CSS` are turned into the live stylesheet.
+- The [Theme Playground](examples/theme-playground/README.md) - author a bundle interactively and export it ready for compilation.

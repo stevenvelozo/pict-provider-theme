@@ -1,16 +1,16 @@
-# Theme Playground — Interactive Theme Builder
+# Theme Playground - Interactive Theme Builder
 
 <!-- docuserve:example-launch:start -->
-> **[&#9654; Launch the live app](examples/theme-playground/index.html)** — runs in your browser, opens in a new tab.
+> **[Launch the live app](examples/theme-playground/index.html)** - runs in your browser, opens in a new tab.
 <!-- docuserve:example-launch:end -->
 
 The Theme Playground is the reference application for **everything**
-`pict-provider-theme` exposes — token editing, mode switching, scale
+`pict-provider-theme` exposes - token editing, mode switching, scale
 selection, custom CSS injection, imagery uploads, and theme bundle
-export — wired up against a representative gallery of every
+export - wired up against a representative gallery of every
 `pict-section-*` view. Edit a token on the right; **every section
 re-paints instantly** because nothing in the gallery uses hardcoded
-colors. The whole flow from bundle → CSS variables → DOM repaint is
+colors. The whole flow from bundle -> CSS variables -> DOM repaint is
 visible on one screen.
 
 It is not a single-purpose demo. It is the playground we use to
@@ -29,7 +29,7 @@ commit, this is the page to open.
 | Live token editing | Every input writes back through `_setAtPath` then re-calls `applyTheme` |
 | Native `<input type="color">` swatches | Tokens that parse as a CSS color render a color picker beside the text input |
 | Auxiliary CSS rider | The bundle's `CSS[0].Content` is editable in a `<textarea>`; edits re-register the bundle |
-| Drag-and-drop image bundling | Drop a PNG on the dropzone → `FileReader.readAsDataURL` → bundle `Image[Key]` |
+| Drag-and-drop image bundling | Drop a PNG on the dropzone -> `FileReader.readAsDataURL` -> bundle `Image[Key]` |
 | Compiled-bundle export | "Export bundle" downloads the current bundle as JSON, ready for compilation |
 | External bundle injection via `?themeUrl=` | A query param fetches and registers a third-party bundle on boot |
 | Section-aware nav with deep-link routing | `pict-router` `/section/<id>` routes; nav rebuilds from `SectionRegistry` |
@@ -38,33 +38,33 @@ commit, this is the page to open.
 
 ## Key files
 
-- `src/Pict-Application-Playground.js` — application class. Registers
+- `src/Pict-Application-Playground.js` - application class. Registers
   the `Theme` provider, the section registry, and the layout view.
   Every section's setup function and view registration happens here.
-- `src/views/PictView-Playground-Layout.js` — the shell. Hosts the
+- `src/views/PictView-Playground-Layout.js` - the shell. Hosts the
   three-column shell + chrome, wires the routes, builds the nav from
   the section registry, runs the token editor, the CSS textarea, the
   imagery dropzone, and the export button.
-- `src/sections/_registry.js` — array of section descriptors. The
+- `src/sections/_registry.js` - array of section descriptors. The
   order here is the nav order. Each entry exports either a plain
   section (welcome, base-components) or a wrapped `pict-section-*`
   view built via `_wrapper.buildSection({...})`.
-- `src/sections/_wrapper.js` — `buildSection({...})` returns a
+- `src/sections/_wrapper.js` - `buildSection({...})` returns a
   section descriptor whose wrapper view paints title/blurb/container
   chrome and then calls the inner pict-section-* view's `render()`.
-- `src/themes/playground-starter.json` — the seed theme. Paired
+- `src/themes/playground-starter.json` - the seed theme. Paired
   Light/Dark tokens, system-strategy mode, brand block, and a curated
   set of `Aliases` so other section modules' legacy `--pict-*` custom
   properties resolve to the theme's tokens.
-- `src/themes/playground-corp.json` — second seed theme, same shape,
+- `src/themes/playground-corp.json` - second seed theme, same shape,
   different palette. Demonstrates that switching is purely "pick a
   different hash".
-- `src/index.html` — HTML shell. Pulls Pict, vendor libs, and the
+- `src/index.html` - HTML shell. Pulls Pict, vendor libs, and the
   Playground bundle; calls `Pict.safeLoadPictApplication`.
 
 ---
 
-## Feature 1 — Theme bundles and the provider
+## Feature 1 - Theme bundles and the provider
 
 The Theme provider is registered like any other provider. The
 playground adds it directly with `new libPictProviderTheme(...)`
@@ -107,13 +107,13 @@ tmpProvider.registerTheme(this._activeBundle);
 tmpProvider.applyTheme(pHash, pMode);
 ```
 
-`registerTheme` is **idempotent on Hash** — passing in a modified
+`registerTheme` is **idempotent on Hash** - passing in a modified
 bundle with the same hash replaces the entry. That is what enables
 the entire "live edit, immediate repaint" loop.
 
 ---
 
-## Feature 2 — Paired light/dark tokens, live-editable
+## Feature 2 - Paired light/dark tokens, live-editable
 
 Tokens are arbitrary nested objects. A leaf is either a primitive
 value (a single mode) or an object whose only keys are `Light` and
@@ -161,11 +161,11 @@ function commit(pNew)
 writes it into the single `<style id="pict-theme">` element, and
 every consumer that reads from those custom properties repaints on
 the next style recalc. **No JavaScript layout pass, no React-style
-diff** — the browser does the work via CSS variable cascade.
+diff** - the browser does the work via CSS variable cascade.
 
 ---
 
-## Feature 3 — Color-aware token inputs
+## Feature 3 - Color-aware token inputs
 
 Token values are stringly-typed but the editor sniffs each one. A
 value that looks like a CSS hex or `rgb*` literal gets a native
@@ -217,11 +217,11 @@ the text input.
 
 ---
 
-## Feature 4 — Auxiliary CSS travels with the theme
+## Feature 4 - Auxiliary CSS travels with the theme
 
 A theme bundle can carry a `CSS` array of `{ Hash, Content, Priority }`
 entries. The Pict CSS cascade picks these up on every `registerTheme`
-call, so a theme can ship rules that ride with its tokens — useful
+call, so a theme can ship rules that ride with its tokens - useful
 for theme-specific component tweaks that cannot be expressed as a
 token alone. The playground exposes this as a textarea below the
 token editor:
@@ -245,8 +245,8 @@ _renderCSSEditor()
 }
 ```
 
-Type a selector + rule into the textarea — `.demo-btn { transform:
-rotate(2deg); }` — and every demo button across every section
+Type a selector + rule into the textarea - `.demo-btn { transform:
+rotate(2deg); }` - and every demo button across every section
 tilts immediately. When the user switches themes, the previous
 auxiliary block is replaced with the new theme's; the cascade does
 not accumulate.
@@ -257,9 +257,9 @@ overrides (`1000`), which is the right slot for "the theme says so".
 
 ---
 
-## Feature 5 — Imagery uploads → data-URL `Image` slot
+## Feature 5 - Imagery uploads -> data-URL `Image` slot
 
-Themes can carry binary imagery — logos, marks, hero shots — in
+Themes can carry binary imagery - logos, marks, hero shots - in
 the `Image` block. The playground accepts drops or clicks on a
 dropzone, base64-encodes each file with `FileReader.readAsDataURL`,
 and writes it into the bundle as a data URL:
@@ -286,16 +286,16 @@ _acceptFiles(pFileList)
 }
 ```
 
-The filename becomes the key — `logo.png` → `Image.Logo`,
-`favicon-32.png` → `Image.Favicon32`. The brand block on the Base
+The filename becomes the key - `logo.png` -> `Image.Logo`,
+`favicon-32.png` -> `Image.Favicon32`. The brand block on the Base
 Components page picks up `Image.Logo` automatically and swaps the
 initial-letter avatar for the uploaded image. The data URL is
 embedded directly in the exported bundle JSON, so the resulting
-file is fully self-contained — no separate asset pipeline.
+file is fully self-contained - no separate asset pipeline.
 
 ---
 
-## Feature 6 — Bundle export, ready for compilation
+## Feature 6 - Bundle export, ready for compilation
 
 The "Export bundle" button serializes the current working bundle as
 indented JSON and triggers a browser download:
@@ -316,7 +316,7 @@ _exportBundle()
 }
 ```
 
-The exported file is the canonical theme bundle shape — paired
+The exported file is the canonical theme bundle shape - paired
 tokens, `Aliases`, optional `CSS` rider, embedded data-URL `Image`
 block. It feeds directly into the `pict-provider-theme` compiler
 CLI (`source/cli/`) and is ready to be registered by another host
@@ -327,7 +327,7 @@ sanity check: edit live, export, commit the JSON, ship it.
 
 ---
 
-## Feature 7 — External bundle injection via `?themeUrl=`
+## Feature 7 - External bundle injection via `?themeUrl=`
 
 The playground reads a `themeUrl` query parameter on boot and, if
 present, fetches the referenced JSON, registers it as a new theme,
@@ -360,7 +360,7 @@ playground's gallery. The query-param hook means "show me what
 
 ---
 
-## Feature 8 — Section-aware nav with deep links
+## Feature 8 - Section-aware nav with deep links
 
 The left rail is rebuilt at boot from `AppData.Playground.SectionRegistry`.
 Each registry entry contributes a nav button and a destination div in the
@@ -425,7 +425,7 @@ module.exports = [
 
 ---
 
-## Feature 9 — Mode strategy and `prefers-color-scheme`
+## Feature 9 - Mode strategy and `prefers-color-scheme`
 
 The mode buttons in the header dispatch to `setMode`:
 
@@ -442,7 +442,7 @@ document.querySelectorAll('.pg-mode-button').forEach((pBtn) =>
 ```
 
 A theme with `Modes.Strategy = "system"` honours
-`prefers-color-scheme` automatically — `setMode('system')`
+`prefers-color-scheme` automatically - `setMode('system')`
 subscribes to the media query and flips between the bundle's `Light`
 and `Dark` values whenever the OS toggles. Click `Light` or `Dark`
 to override. The mode is **reflected as a class on the `<html>`
@@ -450,7 +450,7 @@ element** (`theme-light` / `theme-dark`), so any CSS that wants to
 key on the resolved mode can do so without reading the provider.
 
 The token editor displays both `Light` and `Dark` slots regardless
-of which one is currently active — the bundle is the source of
+of which one is currently active - the bundle is the source of
 truth, the resolved mode is just which leaf is read on this paint.
 
 ---
@@ -471,25 +471,25 @@ The build step runs `npx quack build && npx quack copy` and emits
 
 ## Things to try in the running app
 
-- **Switch themes** — the header `Theme` select toggles between
+- **Switch themes** - the header `Theme` select toggles between
   Playground Starter and Playground Corp. The active theme key
   becomes the working copy; edits apply only to that copy.
-- **Switch modes** — `Light`, `Dark`, `System`. With `System`,
+- **Switch modes** - `Light`, `Dark`, `System`. With `System`,
   flip your OS dark mode and watch the gallery follow.
-- **Edit a token** — try `Color.Brand.Primary`. Every brand-colored
+- **Edit a token** - try `Color.Brand.Primary`. Every brand-colored
   primitive in every section repaints in one frame.
-- **Type into the CSS textarea** — add `.demo-btn { letter-spacing:
+- **Type into the CSS textarea** - add `.demo-btn { letter-spacing:
   0.2em; }`. Every button across every section spreads its
   letters; clear the textarea to revert.
-- **Drop a logo** — drag a PNG named `logo.png` onto the dropzone.
+- **Drop a logo** - drag a PNG named `logo.png` onto the dropzone.
   The Base Components brand block swaps to the uploaded image
   immediately.
-- **Export bundle** — click Export bundle. Open the downloaded
-  JSON in your editor — every edit is captured, including embedded
+- **Export bundle** - click Export bundle. Open the downloaded
+  JSON in your editor - every edit is captured, including embedded
   data-URL imagery.
-- **Deep-link** — append `?themeUrl=https://example.com/foo.json`
+- **Deep-link** - append `?themeUrl=https://example.com/foo.json`
   to the URL to load an external theme on boot.
-- **Navigate by URL** — visit `#/section/logo` or `#/section/form`
+- **Navigate by URL** - visit `#/section/logo` or `#/section/form`
   directly. The router resolves it, the panel shows, the section
   renders.
 
@@ -505,7 +505,7 @@ The build step runs `npx quack build && npx quack copy` and emits
    token, repaint the gallery" loop is two provider calls.
 3. **Paired tokens are first-class.** `{ Light, Dark }` is the
    shape; the provider picks the right side based on the active mode.
-   Hosts do not need separate light/dark stylesheets — they need
+   Hosts do not need separate light/dark stylesheets - they need
    one theme bundle with two values per token.
 4. **Theme bundles carry CSS and imagery.** Tokens cover the
    common case; the `CSS` rider and `Image` block handle the rest.
@@ -517,10 +517,10 @@ The build step runs `npx quack build && npx quack copy` and emits
 
 ## Related documentation
 
-- [pict-section-theme](https://fable-retold.github.io/pict-section-theme/) — the chrome
+- [pict-section-theme](https://fable-retold.github.io/pict-section-theme/) - the chrome
   views (TopBar, BottomBar, Picker, ModeToggle, ScaleSelect) that
   consume this provider in a real application.
-- [pict-section-modal](https://fable-retold.github.io/pict-section-modal/) — modal /
+- [pict-section-modal](https://fable-retold.github.io/pict-section-modal/) - modal /
   toast / tooltip surface; one of the gallery sections.
-- [pict-section-form](https://fable-retold.github.io/pict-section-form/) — form builder
+- [pict-section-form](https://fable-retold.github.io/pict-section-form/) - form builder
   surface; another gallery section.

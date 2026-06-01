@@ -1,6 +1,6 @@
 # Pict Provider: Theme
 
-> **[&#9654; Read the Pict-Provider-Theme Documentation](https://fable-retold.github.io/pict-provider-theme/)** &mdash; interactive docs with quickstart, architecture, and the bundle format.
+> **[Read the Pict-Provider-Theme Documentation](https://fable-retold.github.io/pict-provider-theme/)** - interactive docs with quickstart, architecture, and the bundle format.
 
 A runtime theme manager for [Pict](https://fable-retold.github.io/pict/) applications. Register theme bundles (token maps + CSS + SVG + image assets) and apply them at runtime by injecting CSS custom properties into a single `<style>` element. Supports dark / light / system modes via a class on `<html>`, and ships a `quack theme-build` command that compiles unrolled theme folders into single self-contained JSON bundles.
 
@@ -10,15 +10,15 @@ A runtime theme manager for [Pict](https://fable-retold.github.io/pict/) applica
 
 ## Features
 
-- **Theme bundles** &mdash; A theme is a single JSON object: a nested `Tokens` map, plus optional `CSS`, `SVG`, `Image`, `Brand`, and `Aliases` blocks. Register as many as you like; switch between them by `Hash`.
-- **Runtime CSS custom properties** &mdash; `applyTheme()` flattens `Tokens` into `--theme-*` custom properties and writes them into one `<style id="pict-theme">` element. Every consumer that reads those properties repaints on the next style recalc &mdash; no per-component JavaScript.
-- **Dark / light / system modes** &mdash; Paired tokens (`{ Light, Dark }`) drive three strategies. System mode is CSS-only: an `@media (prefers-color-scheme: dark)` block flips the page with no JavaScript listener. Explicit light / dark adds a `theme-light` / `theme-dark` class on `<html>` that overrides the media query.
-- **Token & asset accessors** &mdash; `token()`, `cssVar()`, `svg()`, `image()`, and `asset()` resolve values from the active bundle for JavaScript consumers (canvas, charts, diagram engines) that cannot read CSS variables.
-- **Template expressions** &mdash; `{~Theme:~}`, `{~ThemeVar:~}`, `{~ThemeAsset:~}`, and `{~ThemeImage:~}` resolve tokens and assets directly inside Pict templates.
-- **Theme inheritance** &mdash; A bundle can declare `BasedOn` another registered hash; the provider deep-merges the chain into one effective bundle, so a brand override can ship only the tokens it changes.
-- **Apply listeners** &mdash; `onApply()` notifies subscribers (with the effective bundle and resolved mode) whenever a theme or mode changes, for consumers that bake colors at render time.
-- **`quack theme-build` command** &mdash; Compile an unrolled theme folder (`manifest.json` + `css/` + `svg/` + `image/`) into a single self-contained JSON bundle. Available as a quackage command, a standalone `pict-theme-build` CLI, and a plain Node module for CI.
-- **Stateless** &mdash; The provider does not persist anything. Host applications decide what to register and apply at boot (from `localStorage`, server config, a query parameter, etc.).
+- **Theme bundles** - A theme is a single JSON object: a nested `Tokens` map, plus optional `CSS`, `SVG`, `Image`, `Brand`, and `Aliases` blocks. Register as many as you like; switch between them by `Hash`.
+- **Runtime CSS custom properties** - `applyTheme()` flattens `Tokens` into `--theme-*` custom properties and writes them into one `<style id="pict-theme">` element. Every consumer that reads those properties repaints on the next style recalc - no per-component JavaScript.
+- **Dark / light / system modes** - Paired tokens (`{ Light, Dark }`) drive three strategies. System mode is CSS-only: an `@media (prefers-color-scheme: dark)` block flips the page with no JavaScript listener. Explicit light / dark adds a `theme-light` / `theme-dark` class on `<html>` that overrides the media query.
+- **Token & asset accessors** - `token()`, `cssVar()`, `svg()`, `image()`, and `asset()` resolve values from the active bundle for JavaScript consumers (canvas, charts, diagram engines) that cannot read CSS variables.
+- **Template expressions** - `{~Theme:~}`, `{~ThemeVar:~}`, `{~ThemeAsset:~}`, and `{~ThemeImage:~}` resolve tokens and assets directly inside Pict templates.
+- **Theme inheritance** - A bundle can declare `BasedOn` another registered hash; the provider deep-merges the chain into one effective bundle, so a brand override can ship only the tokens it changes.
+- **Apply listeners** - `onApply()` notifies subscribers (with the effective bundle and resolved mode) whenever a theme or mode changes, for consumers that bake colors at render time.
+- **`quack theme-build` command** - Compile an unrolled theme folder (`manifest.json` + `css/` + `svg/` + `image/`) into a single self-contained JSON bundle. Available as a quackage command, a standalone `pict-theme-build` CLI, and a plain Node module for CI.
+- **Stateless** - The provider does not persist anything. Host applications decide what to register and apply at boot (from `localStorage`, server config, a query parameter, etc.).
 
 ## Installation
 
@@ -94,7 +94,7 @@ The output is a self-contained `theme/<Hash>.json` ready for `registerTheme()`. 
 
 ## Example
 
-The **Theme Playground** is the reference application &mdash; live-edit tokens and CSS, switch modes, upload imagery, and export a compiled bundle, all against a gallery of real `pict-section-*` views that repaint instantly. See [`docs/examples/theme-playground/README.md`](docs/examples/theme-playground/README.md).
+The **Theme Playground** is the reference application - live-edit tokens and CSS, switch modes, upload imagery, and export a compiled bundle, all against a gallery of real `pict-section-*` views that repaint instantly. See [`docs/examples/theme-playground/README.md`](docs/examples/theme-playground/README.md).
 
 ## Testing
 
@@ -106,11 +106,11 @@ Runs the Mocha (TDD) suites for the provider, the compiler, the diagram adapter,
 
 ## Related Modules
 
-- [pict](https://fable-retold.github.io/pict/) &mdash; The MVC framework. Supplies the application, the CSS cascade (`CSSMap`), and the template engine the provider integrates with.
-- [pict-provider](https://fable-retold.github.io/pict-provider/) &mdash; The base provider class this extends.
-- [pict-template](https://fable-retold.github.io/pict-template/) &mdash; The base class for the four `{~Theme*:~}` template expressions.
-- [pict-section-theme](https://fable-retold.github.io/pict-section-theme/) &mdash; Chrome views (theme picker, mode toggle, scale select) that drive this provider in a real application.
-- [quackage](https://fable-retold.github.io/quackage/) &mdash; The build tool that hosts the `theme-build` and `theme-screenshot` commands.
+- [pict](https://fable-retold.github.io/pict/) - The MVC framework. Supplies the application, the CSS cascade (`CSSMap`), and the template engine the provider integrates with.
+- [pict-provider](https://fable-retold.github.io/pict-provider/) - The base provider class this extends.
+- [pict-template](https://fable-retold.github.io/pict-template/) - The base class for the four `{~Theme*:~}` template expressions.
+- [pict-section-theme](https://fable-retold.github.io/pict-section-theme/) - Chrome views (theme picker, mode toggle, scale select) that drive this provider in a real application.
+- [quackage](https://fable-retold.github.io/quackage/) - The build tool that hosts the `theme-build` and `theme-screenshot` commands.
 
 ## License
 

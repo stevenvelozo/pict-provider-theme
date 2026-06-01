@@ -1,11 +1,11 @@
 # Architecture
 
-How `pict-provider-theme` turns a theme bundle into a live, mode-aware set of CSS custom properties &mdash; and why mode switching needs no JavaScript event handler.
+How `pict-provider-theme` turns a theme bundle into a live, mode-aware set of CSS custom properties - and why mode switching needs no JavaScript event handler.
 
 ## The big picture
 
 ```
-registerTheme(bundle)   →  bundle stored in memory, keyed by Hash
+registerTheme(bundle)   ->  bundle stored in memory, keyed by Hash
                                     │
 applyTheme(hash, mode)  ───────────┘
         │
@@ -38,9 +38,9 @@ Only values under `Tokens` become custom properties. Everything else in the bund
 
 The `Modes.Strategy` field selects how the CSS is built:
 
-- **`single`** &mdash; one mode. The provider emits a single `:root { … }` block. If any token happens to carry a `{ Light, Dark }` pair, the `Light` side is used. No mode class is meaningful.
-- **`paired`** &mdash; explicit light/dark, switched by class on `<html>`.
-- **`system`** &mdash; paired tokens, but the initial mode follows the OS `prefers-color-scheme`.
+- **`single`** - one mode. The provider emits a single `:root { ... }` block. If any token happens to carry a `{ Light, Dark }` pair, the `Light` side is used. No mode class is meaningful.
+- **`paired`** - explicit light/dark, switched by class on `<html>`.
+- **`system`** - paired tokens, but the initial mode follows the OS `prefers-color-scheme`.
 
 `paired` and `system` produce the same stylesheet; they differ only in what `applyTheme` does with the `<html>` class. (Both are referred to below as "paired themes".)
 
@@ -63,12 +63,12 @@ For a paired theme, `applyTheme` emits **one stylesheet with four blocks**, orde
 	}
 }
 
-/* 3. Explicit light override — wins over @media when the class is present */
+/* 3. Explicit light override - wins over @media when the class is present */
 .theme-light {
 	--theme-color-background-primary: #ffffff;
 }
 
-/* 4. Explicit dark override — wins over @media when the class is present */
+/* 4. Explicit dark override - wins over @media when the class is present */
 .theme-dark {
 	--theme-color-background-primary: #1a1a1a;
 }
@@ -77,7 +77,7 @@ For a paired theme, `applyTheme` emits **one stylesheet with four blocks**, orde
 The ordering is the whole trick:
 
 - With **no class** on `<html>` (system mode), the `@media` rule decides: light by default, dark when the OS prefers dark.
-- With **`theme-light`** or **`theme-dark`** on `<html>` (explicit mode), block 3 or 4 wins. They have the same specificity as `:root` but come later in the source, so on a tie the class wins &mdash; locking the page to that mode regardless of OS preference.
+- With **`theme-light`** or **`theme-dark`** on `<html>` (explicit mode), block 3 or 4 wins. They have the same specificity as `:root` but come later in the source, so on a tie the class wins - locking the page to that mode regardless of OS preference.
 
 The consequences:
 
@@ -85,16 +85,16 @@ The consequences:
 - **Non-paired tokens are emitted only once, in `:root`.** Spacing, typography, radii, and the like are not duplicated into the dark blocks.
 - **Aliases live only in `:root`.** Because an alias is `var()` indirection to a paired token, it automatically resolves to the active mode without being duplicated.
 
-For a single-mode theme, only the `:root` block (plus aliases) is emitted &mdash; no `@media`, no `.theme-dark`.
+For a single-mode theme, only the `:root` block (plus aliases) is emitted - no `@media`, no `.theme-dark`.
 
 ## How modes are applied
 
 `_applyMode` is what `applyTheme` and `setMode` call:
 
-- **`light` / `dark`** &mdash; writes the matching `theme-light` / `theme-dark` class onto `document.documentElement` (and removes the other). The resolved mode is snapshotted so synchronous reads via `token()` / `getActiveTheme()` are consistent.
-- **`system`** &mdash; clears both classes so the `@media` rule drives the cascade. The resolved mode is read from `window.matchMedia('(prefers-color-scheme: dark)')`.
+- **`light` / `dark`** - writes the matching `theme-light` / `theme-dark` class onto `document.documentElement` (and removes the other). The resolved mode is snapshotted so synchronous reads via `token()` / `getActiveTheme()` are consistent.
+- **`system`** - clears both classes so the `@media` rule drives the cascade. The resolved mode is read from `window.matchMedia('(prefers-color-scheme: dark)')`.
 
-In system mode, `token()` and `getActiveTheme().ResolvedMode` re-read the OS preference on each call, so they never report a stale value if the OS toggles between calls &mdash; without the provider subscribing to any media-query change.
+In system mode, `token()` and `getActiveTheme().ResolvedMode` re-read the OS preference on each call, so they never report a stale value if the OS toggles between calls - without the provider subscribing to any media-query change.
 
 All DOM access is guarded (`typeof document === 'undefined'` / `typeof window === 'undefined'`), so the provider is safe to construct and exercise server-side or in tests. The bundled tests run against a stubbed `document`.
 
@@ -116,9 +116,9 @@ tmpTheme.registerTheme({
 });
 
 tmpTheme.applyTheme('acme-brand', 'light');
-// Color.Brand.Primary → #ff3399 (overridden)
-// Color.Background.Primary → #ffffff (inherited from pict-default)
-// Brand.Name → 'Acme' (overridden); Brand.Tagline → inherited
+// Color.Brand.Primary -> #ff3399 (overridden)
+// Color.Background.Primary -> #ffffff (inherited from pict-default)
+// Brand.Name -> 'Acme' (overridden); Brand.Tagline -> inherited
 ```
 
 The `Comprehensive` flag is metadata surfaced through `listThemes()` (it defaults to `true`). It signals whether a bundle stands alone or is a partial override layered on a base; the provider does not change its merge behaviour based on it.
@@ -139,16 +139,16 @@ Each alias becomes a line in `:root`:
 --pict-modal-bg: var(--theme-color-background-panel);
 ```
 
-Because the alias points at the token through `var()`, the paired-mode swap propagates automatically &mdash; the alias does not need to be duplicated in the dark block. Alias targets that are not non-empty strings are skipped silently.
+Because the alias points at the token through `var()`, the paired-mode swap propagates automatically - the alias does not need to be duplicated in the dark block. Alias targets that are not non-empty strings are skipped silently.
 
 ## Auxiliary CSS riders
 
-A bundle can carry a `CSS` array of `{ Hash, Content, Priority }` entries &mdash; rules that ride with the theme but cannot be expressed as a token (theme-specific component tweaks). On every `applyTheme`, the provider:
+A bundle can carry a `CSS` array of `{ Hash, Content, Priority }` entries - rules that ride with the theme but cannot be expressed as a token (theme-specific component tweaks). On every `applyTheme`, the provider:
 
 1. Removes any auxiliary CSS it registered for the previous theme (so the cascade does not accumulate across switches).
 2. Registers each new entry through `pict.CSSMap.addCSS(Hash, Content, Priority)`.
 
-`Priority` defaults to `500` when absent. A common choice is `600` &mdash; above provider/view defaults (`500`) and below per-application overrides (`1000`). This step only runs when the host exposes `pict.CSSMap`; in a bare context it is skipped.
+`Priority` defaults to `500` when absent. A common choice is `600` - above provider/view defaults (`500`) and below per-application overrides (`1000`). This step only runs when the host exposes `pict.CSSMap`; in a bare context it is skipped.
 
 These riders are distinct from the injected `<style id="pict-theme">` element, which holds only the token custom properties and is managed directly by the provider (not through `CSSMap`).
 
@@ -159,7 +159,7 @@ These riders are distinct from the injected `<style id="pict-theme">` element, w
 - every `applyTheme()`, and
 - every successful `setMode()`.
 
-This is the seam for consumers that cannot rely on the CSS cascade &mdash; canvas/WebGL surfaces, chart palettes, and especially diagram engines that bake colors into SVG at render time. A listener that throws is caught and logged so it cannot break siblings.
+This is the seam for consumers that cannot rely on the CSS cascade - canvas/WebGL surfaces, chart palettes, and especially diagram engines that bake colors into SVG at render time. A listener that throws is caught and logged so it cannot break siblings.
 
 ### Diagram adapter
 
