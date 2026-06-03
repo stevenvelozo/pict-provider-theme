@@ -4,19 +4,8 @@ How `pict-provider-theme` turns a theme bundle into a live, mode-aware set of CS
 
 ## The big picture
 
-```
-registerTheme(bundle)   ->  bundle stored in memory, keyed by Hash
-                                    │
-applyTheme(hash, mode)  ───────────┘
-        │
-        ├─ resolve BasedOn chain → one "effective" bundle
-        ├─ flatten Tokens        → --theme-* custom properties
-        ├─ build CSS             → single :root (single-mode) OR four-block cascade (paired)
-        ├─ inject                → <style id="pict-theme"> in <head>
-        ├─ register CSS[] riders → Pict CSSMap cascade
-        ├─ set/clear html class  → theme-light / theme-dark / (none)
-        └─ fire onApply listeners
-```
+<!-- bespoke diagram: edit diagrams/the-big-picture.mmd or .hints.json, then: npx pict-renderer-graph build modules/pict/pict-provider-theme/docs -->
+![The big picture](diagrams/the-big-picture.svg)
 
 The provider holds two things in memory: the registered bundles (and their registration order) and the currently active hash + mode. It persists nothing.
 

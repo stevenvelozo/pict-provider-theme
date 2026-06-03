@@ -1,0 +1,11 @@
+registerTheme(bundle)   ->  bundle stored in memory, keyed by Hash
+                                    │
+applyTheme(hash, mode)  ───────────┘
+        │
+        ├─ resolve BasedOn chain → one "effective" bundle
+        ├─ flatten Tokens        → --theme-* custom properties
+        ├─ build CSS             → single :root (single-mode) OR four-block cascade (paired)
+        ├─ inject                → <style id="pict-theme"> in <head>
+        ├─ register CSS[] riders → Pict CSSMap cascade
+        ├─ set/clear html class  → theme-light / theme-dark / (none)
+        └─ fire onApply listeners
